@@ -3,25 +3,32 @@ import pandas
 from tkinter import *
 
 p = pandas
+random_card = {}
+
 
 BG_COLOR = "#B1DDC6"
 # -------------------------- READING DATA ----------------------------- #
+with open("data/french_words.csv", 'r', encoding='utf-8') as data_file:
+    read_file = pandas.read_csv(data_file)
 
 
 def next_card():
-    with open("data/french_words.csv", 'r', encoding='utf-8') as data_file:
-        read_file = pandas.read_csv(data_file)
+    global random_card, timer
+    window.after_cancel(timer)
 
-        # With DataFrame
-        p_df = pandas.DataFrame(read_file).to_dict("records")
-        random_from_dict = random.choice(p_df)
-        canvas.itemconfig(canvas_title, text="FRENCH")
-        canvas.itemconfig(canvas_word, text=random_from_dict["French"].capitalize())
+    p_df = pandas.DataFrame(read_file).to_dict("records")
+    random_card = random.choice(p_df)
+    canvas.itemconfig(card_bg, image=card_front_img)
+    canvas.itemconfig(canvas_title, text="FRENCH", fill="black")
+    canvas.itemconfig(canvas_word, text=random_card["French"].capitalize(), fill="black")
 
-        canvas.after(3000, func=flip_card)
+    timer = window.after(3000, func=flip_card)
 
 
 def flip_card():
+    canvas.itemconfig(card_bg, image=card_back_img)
+    canvas.itemconfig(canvas_title, text="ENGLISH", fill="white")
+    canvas.itemconfig(canvas_word, text=random_card["English"].capitalize(), fill="white")
     print("flipped!")
 
 
@@ -31,10 +38,13 @@ def flip_card():
 window = Tk()
 window.title("Flash Cards")
 window.config(padx=50, pady=50, bg=BG_COLOR)
+timer = window.after(3000, func=lambda: flip_card())
+
 window.resizable(False, False)
 canvas = Canvas(width=800, height=526, highlightthickness=0, bg=BG_COLOR)
 card_front_img = PhotoImage(file="images/card_front.png")
-canvas.create_image(400, 263, image=card_front_img)
+card_back_img = PhotoImage(file="images/card_back.png")
+card_bg = canvas.create_image(400, 263, image=card_front_img)
 canvas.grid(column=0, row=0, columnspan=2)
 
 canvas_title = canvas.create_text(400, 150, text="", font=("Arial", 40, "italic"))
