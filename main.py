@@ -2,26 +2,31 @@ import random
 import pandas
 from tkinter import *
 
-p = pandas
-random_card = {}
-
-
 BG_COLOR = "#B1DDC6"
+
+random_card = {}
+to_learn = {}
+
 # -------------------------- READING DATA ----------------------------- #
-with open("data/french_words.csv", 'r', encoding='utf-8') as data_file:
-    read_file = pandas.read_csv(data_file)
+
+try:
+    read_file = pandas.read_csv("data/words_to_learn.csv")
+
+except FileNotFoundError:
+    read_file = pandas.read_csv("data/french_words.csv")
+    to_learn = read_file.to_dict("records")
+
+else:
+    to_learn = pandas.DataFrame(read_file).to_dict("records")
 
 
 def next_card():
     global random_card, timer
     window.after_cancel(timer)
-
-    p_df = pandas.DataFrame(read_file).to_dict("records")
-    random_card = random.choice(p_df)
+    random_card = random.choice(to_learn)
     canvas.itemconfig(card_bg, image=card_front_img)
     canvas.itemconfig(canvas_title, text="FRENCH", fill="black")
     canvas.itemconfig(canvas_word, text=random_card["French"].capitalize(), fill="black")
-
     timer = window.after(3000, func=flip_card)
 
 
@@ -29,7 +34,14 @@ def flip_card():
     canvas.itemconfig(card_bg, image=card_back_img)
     canvas.itemconfig(canvas_title, text="ENGLISH", fill="white")
     canvas.itemconfig(canvas_word, text=random_card["English"].capitalize(), fill="white")
-    print("flipped!")
+
+
+def is_known():
+    to_learn.remove(random_card)
+    print(len(to_learn))
+    pandas.DataFrame(to_learn).to_csv("data/words_to_learn.csv", index=False)
+
+    next_card()
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -56,7 +68,7 @@ unknown_button = Button(image=cross_image, highlightthickness=0, command=next_ca
 unknown_button.grid(column=0, row=1)
 
 check_image = PhotoImage(file="images/right.png")
-known_button = Button(image=check_image, highlightthickness=0, command=next_card)
+known_button = Button(image=check_image, highlightthickness=0, command=is_known)
 known_button.grid(column=1, row=1)
 
 next_card()
