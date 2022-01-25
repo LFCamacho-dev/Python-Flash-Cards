@@ -12,7 +12,13 @@ to_learn = {}
 try:
     read_file = pandas.read_csv("data/words_to_learn.csv")
 
-except FileNotFoundError:
+except FileNotFoundError as err:
+    print(f"This happened: {err}")
+    read_file = pandas.read_csv("data/french_words.csv")
+    to_learn = read_file.to_dict("records")
+
+except pandas.errors.EmptyDataError as err:
+    print(f"This happened: {err}")
     read_file = pandas.read_csv("data/french_words.csv")
     to_learn = read_file.to_dict("records")
 
@@ -23,7 +29,12 @@ else:
 def next_card():
     global random_card, timer
     window.after_cancel(timer)
-    random_card = random.choice(to_learn)
+    print(f"Words left: {to_learn}")
+    if len(to_learn) > 0:
+        random_card = random.choice(to_learn)
+    else:
+        congrats()
+        return
     canvas.itemconfig(card_bg, image=card_front_img)
     canvas.itemconfig(canvas_title, text="FRENCH", fill="black")
     canvas.itemconfig(canvas_word, text=random_card["French"].capitalize(), fill="black")
@@ -37,13 +48,20 @@ def flip_card():
 
 
 def is_known():
-    to_learn.remove(random_card)
-    print(len(to_learn))
+    if len(to_learn) > 0:
+        to_learn.remove(random_card)
+        print(len(to_learn))
+    else:
+        congrats()
+        return
     pandas.DataFrame(to_learn).to_csv("data/words_to_learn.csv", index=False)
 
     next_card()
 
 
+def congrats():
+    canvas.itemconfig(canvas_title, text="CONGRATULATIONS", fill="black")
+    canvas.itemconfig(canvas_word, text="You have learned every word!", font=("Arial", 20, "normal"), fill="black")
 # ---------------------------- UI SETUP ------------------------------- #
 
 
